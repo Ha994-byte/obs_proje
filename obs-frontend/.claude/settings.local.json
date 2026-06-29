@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__notebooklm__notebook_list",
+      "Bash(npx notebooklm-mcp-server *)",
+      "mcp__notebooklm__refresh_auth"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "notebooklm"
+  ]
+}
