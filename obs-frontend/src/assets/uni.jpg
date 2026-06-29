@@ -1,4 +1,0 @@
-import logo from './assets/logoo.jpg'; // Yolun doğruluğundan emin ol
-
-// img etiketinde ise şöyle kullan:
-<img src={logo} alt="logo" className="w-20 h-20 object-contain" />

@@ -1,181 +1,149 @@
-import {
-  Routes,
-  Route,
-  useNavigate,
-} from "react-router-dom";
-import { GraduationCap, User, ShieldCheck } from "lucide-react";
-import StudentDashboard from "./pages/StudentDashboard";
-import AcademicDashboard from "./pages/AcademicDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import StudentLogin from "./pages/StudentLogin";
-import AcademicLogin from "./pages/AcademicLogin";
-import AdminLogin from "./pages/AdminLogin";
-import logo from './logo.png';
-import crud from './crud.png';
+import { useState, useEffect } from 'react';
+import { api } from './utils/api.js';
 import Login from "./pages/Login";
-
-
-
-
-
-
-
-function HomePage() {
-  const navigate = useNavigate();
-
-  return (
-    <div className="min-h-screen bg-[#f4f7fb]">
-
-      {/* TOPBAR */}
-      <div className="w-full bg-white border-b border-slate-200 px-10 py-5 flex items-center justify-between">
-
-        <div className="flex items-center gap-4">
-          <img 
-    src={logo} 
-    alt="Üniversite Logo" 
-    className="w-12 h-12 object-contain" 
-  />
-
-
-
-
-
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">
-              İstanbul Esenyurt Üniversitesi
-            </h1>
-
-            <p className="text-slate-500 text-lg">
-              Öğrenci Bilgi Sistemi
-              
-            </p>
-          </div>
-        </div>
-
-        <div className="flex gap-10 text-slate-700 text-lg">
-          <span className="cursor-pointer hover:text-blue-600">
-            Ana Sayfa
-          </span>
-
-          <span className="cursor-pointer hover:text-blue-600">
-            Duyurular
-
-              <img 
-    src={crud} 
-    alt="Üniversite Logo" 
-    className="w-12 h-12 object-contain" 
-  />
-          </span>
-
-          <span className="cursor-pointer hover:text-blue-600">
-            Akademik Takvim
-          </span>
-
-          <span className="cursor-pointer hover:text-blue-600">
-            İletişim
-          </span>
-        </div>
-      </div>
-
-      {/* HERO */}
-      <div className="flex flex-col items-center justify-center mt-20 px-4">
-
-        <div className="bg-blue-100 text-blue-700 px-6 py-2 rounded-full text-lg font-semibold">
-          Yeni Nesil Üniversite Otomasyonu
-        </div>
-
-        <h1 className="text-[90px] leading-[95px] font-black text-slate-900 text-center mt-8">
-          Öğrenci
-          <br />
-          Bilgi Sistemi
-        </h1>
-
-        <p className="text-slate-600 text-2xl text-center mt-8 leading-10 max-w-4xl">
-          Öğrenci, akademisyen ve idari personeller için geliştirilmiş modern üniversite yönetim platformu.
-        </p>
-
-        {/* LOGIN CARD */}
-        <div className="w-full flex justify-center mt-20">
-
-          <div className="w-full max-w-2xl bg-white rounded-[35px] shadow-2xl overflow-hidden">
-
-            {/* HEADER */}
-            <div className="bg-[#3572b0] text-white text-center py-7 text-4xl font-bold">
-              Önlisans / Lisans / Enstitü
-            </div>
-
-            {/* STUDENT */}
-            <button
-              onClick={() => navigate("/student-login")}
-              className="w-full flex items-center justify-center gap-5 py-10 text-[36px] text-slate-800 hover:bg-slate-50 transition"
-            >
-              <GraduationCap className="w-10 h-10 text-blue-600" />
-              Öğrenci Girişi
-            </button>
-
-            {/* ACADEMIC */}
-            <button
-              onClick={() => navigate("/academic-login")}
-              className="w-full flex items-center justify-center gap-5 py-10 text-[36px] text-slate-800 border-t hover:bg-slate-50 transition"
-            >
-              <User className="w-10 h-10 text-cyan-700" />
-              Akademisyen Girişi
-            </button>
-
-            {/* ADMIN */}
-            <button
-              onClick={() => navigate("/admin-login")}
-              className="w-full flex items-center justify-center gap-5 py-10 text-[36px] text-slate-800 border-t hover:bg-slate-50 transition"
-            >
-              <ShieldCheck className="w-10 h-10 text-green-600" />
-              İdari Girişi
-            </button>
-
-          </div>
-        </div>
-
-      </div>
-    </div>
-  );
-}
+import AdminDashboard from './pages/AdminDashboard.jsx';
+import StudentDashboard from './pages/StudentDashboard.jsx';
+import AcademicianDashboard from './pages/AcademicianDashboard.jsx';
+import DersKaydi from './pages/DersKaydi.jsx';
+import Notlar from './pages/Notlar.jsx';
+import Transkript from './pages/Transkript.jsx';
+import Duyurular from './pages/Duyurular.jsx';
+import Devamsizlik from './pages/Devamsizlik.jsx';
+import Profil from './pages/Profil.jsx';
+import StudentLayout from './layouts/StudentLayout.jsx';
+import DersProgrami from './pages/DersProgrami.jsx';
 
 function App() {
+  const [currentPage, setCurrentPage] = useState('login');
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const profile = await api.get('/auth/me');
+          if (profile) {
+            localStorage.setItem('user', JSON.stringify(profile));
+            const roleClean = profile.role.trim().toUpperCase().replace(/İ/g, 'I');
+            if (roleClean === 'ROLE_ADMIN') {
+              setCurrentPage('admin');
+            } else if (roleClean === 'ROLE_AKADEMISYEN') {
+              setCurrentPage('academicDashboard');
+            } else {
+              setCurrentPage('studentDashboard');
+            }
+          }
+        } catch (e) {
+          console.error("Auto login failed:", e);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setCurrentPage('login');
+        }
+      }
+    };
+    checkAuth();
+  }, []);
+
+  // Helper to check if a page belongs to the student portal
+  const isStudentPage = (page) => {
+    return [
+      'studentDashboard',
+      'dersProgrami',
+      'dersKaydi',
+      'notlar',
+      'transkript',
+      'duyurular',
+      'devamsizlik',
+      'profil'
+    ].includes(page);
+  };
+
+  const handleLogin = (role) => {
+    if (role === 'student') {
+      setCurrentPage('studentDashboard');
+    } else if (role === 'admin') {
+      setCurrentPage('admin');
+    } else if (role === 'academic') {
+      setCurrentPage('academicDashboard');
+    } else {
+      // Academic or other - fall back to student dashboard for demo
+      setCurrentPage('studentDashboard');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setCurrentPage('login');
+  };
+
+  const renderContent = () => {
+    switch (currentPage) {
+      case 'login':
+        return <Login onLogin={handleLogin} />;
+      case 'admin':
+        return <AdminDashboard onLogout={handleLogout} />;
+      case 'academicDashboard':
+        return <AcademicianDashboard onLogout={handleLogout} />;
+      case 'studentDashboard':
+        return <StudentDashboard onPageChange={setCurrentPage} />;
+      case 'dersProgrami':
+        return <DersProgrami />;
+      case 'dersKaydi':
+        return <DersKaydi />;
+      case 'notlar':
+        return <Notlar onPageChange={setCurrentPage} />;
+      case 'transkript':
+        return <Transkript />;
+      case 'duyurular':
+        return <Duyurular />;
+      case 'devamsizlik':
+        return <Devamsizlik />;
+      case 'profil':
+        return <Profil onPageChange={setCurrentPage} />;
+      default:
+        return <Login onLogin={handleLogin} />;
+    }
+  };
+
+  // Sayfa seçim menüsü (geliştirme amaçlı test aracı)
+  const PageSelector = () => (
+    <div className="fixed bottom-4 right-4 bg-slate-900/90 border border-slate-800 rounded-xl p-3 z-50 backdrop-blur-md max-w-xs shadow-2xl">
+      <p className="text-white text-[10px] font-extrabold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        Hızlı Seçim (Test)
+      </p>
+      <select 
+        value={currentPage}
+        onChange={(e) => setCurrentPage(e.target.value)}
+        className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#5b7cd7]"
+      >
+        <option value="login">🔐 Giriş Sayfası</option>
+        <option value="studentDashboard">🎓 Öğrenci Dashboard</option>
+        <option value="dersProgrami">📅 Ders Programı</option>
+        <option value="academicDashboard">👨‍🏫 Akademisyen Paneli</option>
+        <option value="dersKaydi">📚 Ders Kaydı</option>
+        <option value="notlar">📝 Notlar</option>
+        <option value="transkript">📄 Transkript</option>
+        <option value="duyurular">📢 Duyurular</option>
+        <option value="devamsizlik">✓ Devamsızlık</option>
+        <option value="profil">👤 Profil</option>
+        <option value="admin">⚙️ İdari Dashboard</option>
+      </select>
+    </div>
+  );
+
   return (
-    <Routes>
-
-      <Route path="/" element={<HomePage />} />
-
-      <Route
-        path="/student-login"
-        element={<StudentLogin />}
-      />
-
-      <Route
-        path="/academic-login"
-        element={<AcademicLogin />}
-      />
-
-      <Route
-        path="/admin-login"
-        element={<AdminLogin />}
-      />
-
-      <Route
-        path="/student-dashboard"
-        element={<StudentDashboard />}
-      />
-
-      <Route
-        path="/academic-dashboard"
-        element={<AcademicDashboard />}
-      />
-
-      <Route
-        path="/admin-dashboard"
-        element={<AdminDashboard />}
-      />
-
-    </Routes>
+    <>
+      {isStudentPage(currentPage) ? (
+        <StudentLayout currentPage={currentPage} onPageChange={setCurrentPage}>
+          {renderContent()}
+        </StudentLayout>
+      ) : (
+        renderContent()
+      )}
+      <PageSelector />
+    </>
   );
 }
 
